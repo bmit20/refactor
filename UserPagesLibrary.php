@@ -93,8 +93,8 @@ use App\Models\RabbitMQ\AdFactory\Crawlers\AdFactoryCrawlersMoeinsoftRabbitModel
 use Exception;
 use PhpAmqpLib\Channel\AMQPChannel;
 use Psr\Log\LogLevel;
-use Sanjagh\PHPShared\Time;
-use Sanjagh\PHPShared\Log\SanjaghLogger;
+use company\PHPShared\Time;
+use company\PHPShared\Log\companyLogger;
 
 class UserPagesLibrary extends CommonLibrary
 {
@@ -350,7 +350,7 @@ class UserPagesLibrary extends CommonLibrary
 
     private $channel;
     private $uSleep;
-    private $sanjaghLogger;
+    private $companyLogger;
     private $startTime;
 
     /**
@@ -439,7 +439,7 @@ class UserPagesLibrary extends CommonLibrary
      * @param AdFactoryCrawlersMoeinsoftRabbitModel $adFactoryCrawlersMoeinsoftRabbitModel
      * last_doc
      * ATTENTION : please do not remove above comment this is a flag for crawler generator
-     * @param SanjaghLogger $sanjaghLogger
+     * @param companyLogger $companyLogger
      */
     public function __construct(AdFactoryUserPagesRabbitModel $adFactoryUserPagesRabbitModel,
                                 AdFactoryCrawlersSchemaRabbitModel $adFactoryCrawlersSchemaRabbitModel,
@@ -525,7 +525,7 @@ class UserPagesLibrary extends CommonLibrary
                                 AdFactoryCrawlersMoeinsoftRabbitModel $adFactoryCrawlersMoeinsoftRabbitModel,
                                 //last_arg
                                 //ATTENTION : please do not remove above comment this is a flag for crawler generator
-                                SanjaghLogger $sanjaghLogger
+                                companyLogger $companyLogger
         ) {
         $this->adFactoryUserPagesRabbitModel = $adFactoryUserPagesRabbitModel;
         $this->adFactoryUserPagesRabbitChannel = $adFactoryUserPagesRabbitModel->getChannel();
@@ -775,7 +775,7 @@ class UserPagesLibrary extends CommonLibrary
         //last_set
         //ATTENTION : please do not remove above comment this is a flag for crawler generator
 
-        $this->sanjaghLogger = $sanjaghLogger;
+        $this->companyLogger = $companyLogger;
     }
 
     /**
@@ -811,7 +811,7 @@ class UserPagesLibrary extends CommonLibrary
                     //
                 } catch (Exception $e) {
                     Sentry::send($e);
-                    $this->sanjaghLogger->log(
+                    $this->companyLogger->log(
                         LogLevel::EMERGENCY,
                         'unhandled exception in create mini ad handler',
                         ['message' => json_decode($msg->body, true), 'exception_message' => $e->getMessage(), 'exception_trace' => $e->getTraceAsString()]
@@ -846,7 +846,7 @@ class UserPagesLibrary extends CommonLibrary
 
         $mediaId = $msg[RegisterMessageConstant::MEDIA_ID];
         $media = $this->getMedia($mediaId);
-        $this->checkMediaExist($msg, $media, $this->sanjaghLogger);
+        $this->checkMediaExist($msg, $media, $this->companyLogger);
 
         //TODO add other type of crawling based on media config [just_schema, js, hybrid, api?, ...]
 
@@ -857,7 +857,7 @@ class UserPagesLibrary extends CommonLibrary
 
         if ($crawlerType == MediaConstant::CRAWLER_TYPE_SCHEMA) {
             $this->adFactoryCrawlersSchemaRabbitModel->basicPublish($msg, false, $this->adFactoryCrawlersSchemaRabbitChannel);
-            $this->sanjaghLogger->log(
+            $this->companyLogger->log(
                 LogLevel::INFO,
                 'user pages message passed to schema crawler for ' . $media->domain,
                 ['duration' => Time::duration($this->startTime)]
@@ -1108,7 +1108,7 @@ class UserPagesLibrary extends CommonLibrary
                 //last_case
                 //ATTENTION : please do not remove above comment this is a flag for crawler generator
                 default:
-                    $this->sanjaghLogger->log(
+                    $this->companyLogger->log(
                         LogLevel::ERROR,
                         'media crawler domain is not defined',
                         ['media_id' => $mediaId, 'message' => $msg]
@@ -1116,7 +1116,7 @@ class UserPagesLibrary extends CommonLibrary
                     throw new DummyException();
             }
 
-            $this->sanjaghLogger->log(
+            $this->companyLogger->log(
                 LogLevel::INFO,
                 'user pages message passed to ' . $media->domain . ' crawler',
                 ['duration' => Time::duration($this->startTime)]
@@ -1132,7 +1132,7 @@ class UserPagesLibrary extends CommonLibrary
     {
         // Referer does not exist
         if (!isset($msg[RegisterMessageConstant::REFERER])) {
-            $this->sanjaghLogger->log(
+            $this->companyLogger->log(
                 LogLevel::ERROR,
                 'Referer dose not exists.',
                 ['message' => $msg, 'duration' => Time::duration($this->startTime)]
@@ -1146,7 +1146,7 @@ class UserPagesLibrary extends CommonLibrary
         $urlComponents = parse_url($url);
         $allowedProtocol = ['https', 'http'];
         if (!isset($urlComponents['scheme']) || !in_array($urlComponents['scheme'], $allowedProtocol)) {
-            $this->sanjaghLogger->log(
+            $this->companyLogger->log(
                 LogLevel::ERROR,
                 'Referer is not a valid url.',
                 ['message' => $msg, 'duration' => Time::duration($this->startTime)]
